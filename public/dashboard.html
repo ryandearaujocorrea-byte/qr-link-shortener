@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - QR Link Gen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 28px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .short-code {
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .short-code:hover {
+            text-decoration: underline;
+        }
+
+        .clicks {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-confirm {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Dashboard</h1>
+            <a href="/" class="back-btn">← Voltar</a>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total de Links</div>
+                <div class="stat-number" id="totalLinks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total de Cliques</div>
+                <div class="stat-number" id="totalClicks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Clique Médio</div>
+                <div class="stat-number" id="avgClicks">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">Carregando...</div>
+            <table id="linksTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Link Curto</th>
+                        <th>URL Original</th>
+                        <th>Cliques</th>
+                        <th>Criado em</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div id="empty" class="empty" style="display: none;">
+                📭 Nenhum link criado ainda. <a href="/">Crie um agora!</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar exclusão</h2>
+            <p>Tem certeza que deseja deletar este link?</p>
+            <div class="modal-buttons">
+                <button class="btn-confirm" onclick="confirmDelete()">Deletar</button>
+                <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deleteTarget = null;
+
+        async function loadLinks() {
+            try {
+                const response = await fetch('/api/links');
+                const links = await response.json();
+
+                const loading = document.getElementById('loading');
+                const table = document.getElementById('linksTable');
+                const empty = document.getElementById('empty');
+                const tbody = document.getElementById('tableBody');
+
+                if (links.length === 0) {
+                    loading.style.display = 'none';
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                let totalClicks = 0;
+
+                links.forEach(link => {
+                    totalClicks += link.clicks;
+                    const date = new Date(link.created_at).toLocaleDateString('pt-BR');
+                    const row = `
+                        <tr>
+                            <td><span class="short-code" onclick="copyCode('${link.short_code}')">${link.short_code}</span></td>
+                            <td><a href="${link.original_url}" target="_blank" style="color: #667eea; text-decoration: none;">${truncateUrl(link.original_url)}</a></td>
+                            <td><span class="clicks">${link.clicks}</span></td>
+                            <td>${date}</td>
+                            <td><button class="delete-btn" onclick="openDeleteModal('${link.short_code}')">Deletar</button></td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                document.getElementById('totalLinks').textContent = links.length;
+                document.getElementById('totalClicks').textContent = totalClicks;
+                document.getElementById('avgClicks').textContent = (totalClicks / links.length).toFixed(1);
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                console.error('Erro ao carregar links:', err);
+            }
+        }
+
+        function truncateUrl(url) {
+            return url.length > 50 ? url.substring(0, 50) + '...' : url;
+        }
+
+        function copyCode(code) {
+            const url = `http://localhost:3000/${code}`;
+            navigator.clipboard.writeText(url);
+            alert('Link copiado: ' + url);
+        }
+
+        function openDeleteModal(shortCode) {
+            deleteTarget = shortCode;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deleteTarget = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteTarget) return;
+
+            try {
+                await fetch(`/api/links/${deleteTarget}`, { method: 'DELETE' });
+                closeModal();
+                loadLinks();
+            } catch (err) {
+                console.error('Erro ao deletar:', err);
+            }
+        }
+
+        loadLinks();
+        setInterval(loadLinks, 5000);
+    </script>
+</body>
+</html>

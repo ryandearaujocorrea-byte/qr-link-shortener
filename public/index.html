@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code & URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .qr-code {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .qr-code img {
+            max-width: 200px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .link-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .link-info label {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .link-info input {
+            background: #f0f0f0;
+            cursor: text;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: #4CAF50;
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .nav {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav a:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            color: #4CAF50;
+        }
+
+        .message.error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 QR Link Gen</h1>
+        <p class="subtitle">Crie URLs curtas e QR codes em segundos</p>
+
+        <form id="urlForm">
+            <div class="form-group">
+                <label for="url">Cole sua URL aqui:</label>
+                <input type="url" id="url" placeholder="https://exemplo.com" required>
+            </div>
+            <button type="submit">Gerar QR Code & Link Curto</button>
+        </form>
+
+        <div id="result" class="result">
+            <div class="qr-code">
+                <img id="qrImage" alt="QR Code">
+            </div>
+            <div class="link-info">
+                <label>Link Encurtado:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="shortUrl" readonly>
+                    <button class="copy-btn" onclick="copyToClipboard('shortUrl')">Copiar</button>
+                </div>
+            </div>
+            <div class="link-info">
+                <label>URL Original:</label>
+                <input type="text" id="originalUrl" readonly>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="nav">
+            <a href="/dashboard.html">📊 Ver Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const result = document.getElementById('result');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('url').value;
+            message.textContent = 'Processando...';
+            message.className = 'message';
+
+            try {
+                const response = await fetch('/api/shorten', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('qrImage').src = data.qr_code;
+                    document.getElementById('shortUrl').value = data.short_url;
+                    document.getElementById('originalUrl').value = data.original_url;
+                    result.classList.add('show');
+                    message.textContent = '✅ QR Code e link criados com sucesso!';
+                    message.className = 'message success';
+                    document.getElementById('url').value = '';
+                } else {
+                    message.textContent = '❌ ' + data.error;
+                    message.className = 'message error';
+                }
+            } catch (err) {
+                message.textContent = '❌ Erro ao processar';
+                message.className = 'message error';
+            }
+        });
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            alert('Copiado para área de transferência!');
+        }
+    </script>
+</body>
+</html>
